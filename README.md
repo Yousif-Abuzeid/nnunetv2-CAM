@@ -346,8 +346,6 @@ nnunetv2_cam/
 ├── cam_core.py          # CAM computation logic
 ├── cli.py               # Command-line interface
 ├── utils.py             # Helper functions
-├── example.py           # Usage examples
-└── test_integration.py  # Integration tests
 ```
 
 ### How It Works
