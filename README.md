@@ -10,8 +10,6 @@ A standalone, external Python module for computing Class Activation Maps (CAMs) 
 
 - [Features](#features)
 - [Installation](#installation)
-  - [Local Installation](#local-installation)
-  - [Google Colab Installation](#google-colab-installation)
 - [Quick Start](#quick-start)
   - [Python API](#python-api)
   - [Command Line](#command-line)
@@ -46,16 +44,14 @@ A standalone, external Python module for computing Class Activation Maps (CAMs) 
 - nnUNetv2 >= 2.0
 - pytorch-grad-cam >= 1.4.0
 
-### Local Installation
+### Installation Steps
 
 ```bash
 cd nnunetv2_cam
 pip install -e .
+pip show nnunetv2_cam
 ```
 
-### Google Colab Installation
-
-⚠️ **IMPORTANT**: You MUST restart the runtime after installation!
 
 ```python
 # Cell 1: Install
@@ -68,8 +64,6 @@ pip install -e .
 from nnunetv2_cam import run_cam_for_prediction
 print("✅ Installation successful!")
 ```
-
-**Why restart?** Google Colab and Jupyter notebooks require a runtime restart after installing packages for them to become importable.
 
 ---
 
@@ -288,161 +282,6 @@ loaded_cam = np.load('/output/case001_cam.npy')
 
 ---
 
-## Troubleshooting
-
-### ❌ Error: "ModuleNotFoundError: No module named 'nnunetv2_cam'"
-
-**Cause**: Runtime needs restart after installation (Colab/Jupyter only)
-
-**Solution**:
-1. Install: `!cd /content/nnunetv2_cam && pip install -e .`
-2. **Restart runtime**: `Runtime → Restart runtime`
-3. Import: `from nnunetv2_cam import run_cam_for_prediction`
-
-### ❌ Error: "Target layer not found"
-
-**Cause**: Invalid layer name
-
-**Solution**: Use `--list-layers` to see available layers:
-```bash
-nnunetv2_cam --list-layers -m /path/to/model -i /dummy -o /dummy --target-layer dummy
-```
-
-### ❌ Error: Missing --target-layer value
-
-**Wrong**:
-```bash
---target-layer --target-class 1  # Missing layer name!
-```
-
-**Correct**:
-```bash
---target-layer encoder.stages.4.0 --target-class 1
-```
-
-### ❌ Out of Memory
-
-**Solutions**:
-
-1. Use fewer folds:
-   ```python
-   predictor.initialize_from_trained_model_folder(model, use_folds=(0,))
-   ```
-
-2. Increase step size (faster, uses less memory):
-   ```python
-   predictor = nnUNetPredictor(tile_step_size=0.75)
-   ```
-
-3. Use CPU:
-   ```python
-   predictor = nnUNetPredictor(device=torch.device('cpu'))
-   ```
-
-### ❌ CAM values are all zero
-
-**Possible causes**:
-- Target class doesn't exist in the segmentation
-- Wrong target layer
-- Model not properly trained
-
-**Solutions**:
-- Verify target class exists in your data
-- Try different layers (start with `encoder.stages.4.0`)
-- Check model predictions are working correctly
-
-### 🔧 Quick Diagnostic
-
-Run the diagnostic script:
-```python
-!python /content/nnunetv2_cam/diagnose_installation.py
-```
-
----
-
-## Advanced Usage
-
-### Custom Preprocessing
-
-```python
-from nnunetv2_cam.api import run_cam_for_prediction
-
-# Use custom predictor settings
-predictor = nnUNetPredictor(
-    tile_step_size=0.5,        # Overlap between patches
-    use_gaussian=True,         # Gaussian importance weighting
-    use_mirroring=True,        # Test-time augmentation
-    perform_everything_on_gpu=True,
-    device=torch.device('cuda'),
-    verbose=True
-)
-
-predictor.initialize_from_trained_model_folder(
-    '/path/to/model',
-    use_folds=(0, 1, 2),       # Multi-fold ensemble
-    checkpoint_name='checkpoint_best.pth'
-)
-
-heatmaps = run_cam_for_prediction(
-    predictor=predictor,
-    input_files='/path/to/images',
-    output_folder='/path/to/output',
-    target_layer='encoder.stages.4.0',
-    target_class=1,
-    method='gradcam',
-    cam_type='2d',
-    device=torch.device('cuda'),
-    save_slices=True,
-    verbose=True
-)
-```
-
-### Analyzing Multiple Classes
-
-```python
-# Generate CAMs for multiple classes
-classes_to_analyze = [1, 2, 3]
-all_heatmaps = {}
-
-for target_class in classes_to_analyze:
-    print(f"\nGenerating CAMs for class {target_class}")
-    heatmaps = run_cam_for_prediction(
-        predictor=predictor,
-        input_files='/path/to/images',
-        output_folder=f'/output/class_{target_class}',
-        target_layer='encoder.stages.4.0',
-        target_class=target_class,
-        verbose=True
-    )
-    all_heatmaps[target_class] = heatmaps
-
-# Compare attention across classes
-import numpy as np
-for cls in classes_to_analyze:
-    mean_attention = np.mean([h.mean() for h in all_heatmaps[cls]])
-    print(f"Class {cls}: Mean attention = {mean_attention:.4f}")
-```
-
-### Saving Results to Google Drive
-
-```python
-from google.colab import drive
-drive.mount('/content/drive')
-
-OUTPUT = '/content/drive/MyDrive/cam_outputs'
-os.makedirs(OUTPUT, exist_ok=True)
-
-heatmaps = run_cam_for_prediction(
-    predictor=predictor,
-    input_files='/content/data/images',
-    output_folder=OUTPUT,  # Saves to Drive
-    target_layer='encoder.stages.4.0',
-    target_class=1,
-    verbose=True
-)
-```
-
----
 
 ## CLI Reference
 
@@ -519,36 +358,7 @@ nnunetv2_cam/
 
 ---
 
-## Citation
 
-If you use this tool, please cite:
-
-**nnU-Net:**
-```bibtex
-@article{isensee2021nnunet,
-  title={nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation},
-  author={Isensee, Fabian and Jaeger, Paul F and Kohl, Simon AA and Petersen, Jens and Maier-Hein, Klaus H},
-  journal={Nature methods},
-  volume={18},
-  number={2},
-  pages={203--211},
-  year={2021},
-  publisher={Nature Publishing Group}
-}
-```
-
-**Grad-CAM:**
-```bibtex
-@inproceedings{selvaraju2017grad,
-  title={Grad-cam: Visual explanations from deep networks via gradient-based localization},
-  author={Selvaraju, Ramprasaath R and Cogswell, Michael and Das, Abhishek and Vedantam, Ramakrishna and Parikh, Devi and Batra, Dhruv},
-  booktitle={Proceedings of the IEEE international conference on computer vision},
-  pages={618--626},
-  year={2017}
-}
-```
-
----
 
 ## License
 
@@ -570,16 +380,4 @@ Contributions are welcome! Please open an issue or pull request.
 
 ---
 
-## Support
 
-If you encounter any issues:
-
-1. Check the [Troubleshooting](#troubleshooting) section
-2. Run the diagnostic script: `python diagnose_installation.py`
-3. Check that all dependencies are installed: `pip list | grep -E "torch|nnunet|grad-cam"`
-4. For Google Colab: Make sure you restarted the runtime after installation
-5. Open an issue with details about your error
-
----
-
-**Happy CAM generation! 🔥**
