@@ -16,10 +16,7 @@ A standalone, external Python module for computing Class Activation Maps (CAMs) 
 - [Usage Examples](#usage-examples)
 - [Finding Target Layers](#finding-target-layers)
 - [Output Format](#output-format)
-- [Troubleshooting](#troubleshooting)
-- [Advanced Usage](#advanced-usage)
 - [CLI Reference](#cli-reference)
-- [Citation](#citation)
 
 ---
 
@@ -379,5 +376,3 @@ Contributions are welcome! Please open an issue or pull request.
 - **Reference**: Based on insights from MoriiHuang's nnUNet-UAMT-DA-GRADCAM
 
 ---
-
-
