@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+include USAGE_GUIDE.md
+include pyproject.toml
+recursive-include nnunetv2_cam *.py
