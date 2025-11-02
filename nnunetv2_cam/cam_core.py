@@ -148,7 +148,7 @@ def compute_cam_with_sliding_window(
         n_predictions_cam_file = torch.zeros(cam_data.shape[1:], dtype=torch.half, device=device)
 
         # Create GradCAM object
-        with cam_class(model, target_layers=target_layers, use_cuda=(device.type == "cuda")) as cam:
+        with cam_class(model, target_layers=target_layers) as cam:
             # Process each sliding window patch
             for sl in slicers:
                 workon = cam_data[sl][None]
