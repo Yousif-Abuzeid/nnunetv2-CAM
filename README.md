@@ -40,13 +40,21 @@ A standalone, external Python module for computing Class Activation Maps (CAMs) 
 - PyTorch >= 2.0.0
 - nnUNetv2 >= 2.0
 - pytorch-grad-cam >= 1.4.0
-
-### Installation Steps
+### Install via pip
 
 ```bash
-cd nnunetv2_cam
+pip install nnunetv2-cam
+```
+
+
+### Installation Steps from Source
+
+```bash
+git clone https://github.com/Yousif-Abuzeid/nnunetv2-CAM.git
+cd nnunetv2_CAM
 pip install -e .
-pip show nnunetv2_cam
+pip show nnunetv2_CAM
+
 ```
 
 
