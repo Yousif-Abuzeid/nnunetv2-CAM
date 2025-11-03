@@ -139,6 +139,8 @@ def run_cam_for_prediction(
                 predicted_cam=predicted_cam,
                 original_data=data,
                 output_file=output_truncated,
+                properties=properties,
+                configuration_manager=predictor.configuration_manager,
                 verbose=verbose,
             )
 

@@ -19,20 +19,58 @@ def save_cam_slices(
     predicted_cam: torch.Tensor,
     original_data: torch.Tensor,
     output_file: str,
+    properties: dict = None,
+    configuration_manager=None,
     verbose: bool = False,
 ) -> None:
     """
     Save CAM heatmap overlays as PNG slices.
 
     This replicates the slice-by-slice saving logic from the reference implementation.
+    If properties and configuration_manager are provided, CAM will be resampled to
+    original shape using nnUNet's resampling functions.
 
     Args:
         predicted_cam: CAM heatmap tensor (1, D, H, W) or (1, H, W)
         original_data: Original preprocessed data (C, D, H, W) or (C, H, W)
         output_file: Base output file path (will be modified to create cam folder)
+        properties: nnUNet properties dict containing original shape info (optional)
+        configuration_manager: nnUNet ConfigurationManager for resampling (optional)
         verbose: Whether to print debug information
     """
-    # Split into slices
+
+    # Resample CAM to original shape using nnUNet's resampling function
+    if (
+        properties is not None
+        and configuration_manager is not None
+        and "shape_after_cropping_and_before_resampling" in properties
+    ):
+        original_shape = properties["shape_after_cropping_and_before_resampling"]
+
+        # Get spacing information
+        current_spacing = (
+            configuration_manager.spacing
+            if len(configuration_manager.spacing) == len(original_shape)
+            else [properties["spacing"][0], *configuration_manager.spacing]
+        )
+
+        # Use nnUNet's resampling function (same as used for predictions)
+        predicted_cam = configuration_manager.resampling_fn_probabilities(
+            predicted_cam, original_shape, current_spacing, properties["spacing"]
+        )
+
+        # Also resample original_data to match
+        original_data = configuration_manager.resampling_fn_probabilities(
+            original_data, original_shape, current_spacing, properties["spacing"]
+        )
+
+        # Convert back to torch if numpy
+        if isinstance(predicted_cam, np.ndarray):
+            predicted_cam = torch.from_numpy(predicted_cam)
+        if isinstance(original_data, np.ndarray):
+            original_data = torch.from_numpy(original_data)
+
+    # Split into slices (dim=1 corresponds to slice dimension after nnUNet preprocessing)
     slices_cam = torch.split(predicted_cam, 1, dim=1)
     slices_ori = torch.split(original_data, 1, dim=1)
 
