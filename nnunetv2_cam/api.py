@@ -97,11 +97,11 @@ def run_cam_for_prediction(
 
     # Process each input file
     heatmaps = []
-    iterator = tqdm(input_files, desc="Processing files", disable=False)
+    iterator = tqdm(input_files, desc="Processing files", disable=not verbose, leave=True, position=0)
 
     for input_file in iterator:
         if verbose:
-            print(f"\nProcessing: {input_file}")
+            iterator.set_postfix_str(f"Processing: {Path(input_file).name}")
 
         # Get base filename for output
         base_name = Path(input_file).stem
@@ -149,7 +149,7 @@ def run_cam_for_prediction(
         heatmaps.append(heatmap)
 
         if verbose:
-            print(f"✓ Completed: {input_file}")
+            iterator.write(f"✓ Completed: {Path(input_file).name}")
 
     return heatmaps
 

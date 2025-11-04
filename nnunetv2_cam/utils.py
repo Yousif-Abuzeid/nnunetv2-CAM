@@ -119,13 +119,24 @@ def save_cam_slices(
     index = 0
     for slice_cam, slice_ori in zip(slices_cam, slices_ori):
         try:
-            # Normalize original image to [0, 1]
-            img_array_gray = slice_ori.squeeze().cpu().numpy()
+            # Get slice data - handle multi-channel inputs
+            slice_data = slice_ori.squeeze().cpu().numpy()  # Shape: (C, H, W) or (H, W)
+
+            # Handle multi-channel images
+            if slice_data.ndim == 3:
+                # Multi-channel: average across channels for visualization
+                # Shape: (C, H, W) -> (H, W)
+                img_array_gray = slice_data.mean(axis=0)
+            else:
+                # Single channel: use as-is
+                img_array_gray = slice_data
+
+            # Normalize to [0, 1]
             img_array_gray_normalized = (img_array_gray - img_array_gray.min()) / (
                 img_array_gray.max() - img_array_gray.min() + 1e-8
             )
 
-            # Convert grayscale to RGB
+            # Convert grayscale to RGB for CAM overlay
             img_array_rgb = (
                 cv2.cvtColor(
                     (img_array_gray_normalized * 255).astype(np.uint8), cv2.COLOR_GRAY2RGB

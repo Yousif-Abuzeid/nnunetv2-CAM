@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from acvl_utils.cropping_and_padding.padding import pad_nd_image
 from pytorch_grad_cam import GradCAM, GradCAMPlusPlus
+from tqdm import tqdm
 
 
 class SemanticSegmentationTarget:
@@ -121,7 +122,10 @@ def compute_cam_with_sliding_window(
             image_size, configuration_manager.patch_size, tile_step_size, verbose
         )
     else:
-        image_size = data.shape[1:]
+        image_size = data.shape[1:]  
+        if verbose:
+            print(f"DEBUG CAM_CORE 3D: Using image_size from data.shape[1:] = {image_size}")
+            print(f"DEBUG CAM_CORE 3D: cam_data.shape[1:] = {cam_data.shape[1:]}")
         slicers = _get_sliding_window_slicers(
             image_size, configuration_manager.patch_size, tile_step_size, verbose
         )
@@ -150,7 +154,7 @@ def compute_cam_with_sliding_window(
         # Create GradCAM object
         with cam_class(model, target_layers=target_layers) as cam:
             # Process each sliding window patch
-            for sl in slicers:
+            for sl in tqdm(slicers, desc="Processing patches", disable=not verbose, leave=False, position=1):
                 workon = cam_data[sl][None]
                 workon = workon.to(device, non_blocking=False)
 
@@ -173,9 +177,8 @@ def compute_cam_with_sliding_window(
                 targets = [SemanticSegmentationTarget(target_class, car_mask_float)]
 
                 # Compute CAM for this patch
-                grayscale_cam = torch.from_numpy(
-                    cam(input_tensor=workon, targets=targets)[0, :]
-                ).to(device)
+                cam_output = cam(input_tensor=workon, targets=targets)[0, :]
+                grayscale_cam = torch.from_numpy(cam_output).to(device)
 
                 # Accumulate CAM
                 predicted_cam_file[sl] += grayscale_cam
