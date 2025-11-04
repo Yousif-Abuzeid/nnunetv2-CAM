@@ -136,7 +136,7 @@ def main():
     # List available CAM methods if requested
     if args.list_methods:
         from nnunetv2_cam.cam_core import get_available_cam_methods
-        
+
         print("\n" + "=" * 70)
         print("Available CAM Methods:")
         print("=" * 70)

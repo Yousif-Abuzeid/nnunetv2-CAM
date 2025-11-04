@@ -44,7 +44,8 @@ def run_cam_for_prediction(
         target_layer: Name of the target layer for CAM computation
                       (e.g., 'encoder.stages.4.0')
         target_class: Target class index for CAM (default: 1, foreground)
-        method: CAM method - 'gradcam' or 'gradcam++' (default: 'gradcam')
+        method: CAM method - any method from pytorch-grad-cam (e.g., 'gradcam',
+                'gradcam++', 'eigencam', 'layercam', etc.) (default: 'gradcam')
         cam_type: '2d' or '3d' (default: '2d')
         device: Torch device to use (default: cuda)
         save_slices: Whether to save individual slice visualizations (default: True)

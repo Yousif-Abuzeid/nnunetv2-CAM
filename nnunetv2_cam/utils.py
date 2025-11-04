@@ -13,6 +13,7 @@ import numpy as np
 import torch
 from PIL import Image
 from pytorch_grad_cam.utils.image import show_cam_on_image
+from tqdm import tqdm
 
 
 def save_cam_slices(
@@ -80,12 +81,17 @@ def save_cam_slices(
     cam_folder = Path(output_folder) / f"cam_{method}" / case_name
     cam_folder.mkdir(parents=True, exist_ok=True)
 
-    if verbose:
-        print(f"Saving {len(slices_cam)} slices to {cam_folder}")
+    # Save each slice with progress bar
+    slice_iterator = tqdm(
+        zip(slices_cam, slices_ori),
+        total=len(slices_cam),
+        desc="Saving slices",
+        disable=not verbose,
+        leave=False,
+        position=2,
+    )
 
-    # Save each slice
-    index = 0
-    for slice_cam, slice_ori in zip(slices_cam, slices_ori):
+    for index, (slice_cam, slice_ori) in enumerate(slice_iterator):
         try:
             # Get slice data - handle multi-channel inputs
             slice_data = slice_ori.squeeze().cpu().numpy()  # Shape: (C, H, W) or (H, W)
@@ -122,11 +128,8 @@ def save_cam_slices(
             image = Image.fromarray(visualization)
             image.save(cam_folder / f"slice_{index:04d}.png")
 
-            if verbose:
-                print(f"✓ Saved slice {index}")
         except Exception as e:
-            print(f"✗ ERROR saving slice {index}: {e}")
-        index += 1
+            slice_iterator.write(f"✗ ERROR saving slice {index}: {e}")
 
 
 def save_heatmap_nifti(
@@ -201,3 +204,15 @@ def get_available_layers(model: torch.nn.Module, max_display: int = 20) -> list:
     """
     layer_names = [name for name, _ in model.named_modules() if name]
     return layer_names[:max_display]
+
+
+def get_available_cam_methods() -> list:
+    """
+    Get a list of available CAM methods from pytorch-grad-cam.
+
+    Returns:
+        List of CAM method names
+    """
+    from nnunetv2_cam.cam_core import CAM_METHODS
+
+    return list(CAM_METHODS.keys())

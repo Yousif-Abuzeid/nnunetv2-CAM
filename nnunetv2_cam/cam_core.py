@@ -15,54 +15,52 @@ from tqdm import tqdm
 # Import all available CAM methods from pytorch-grad-cam
 try:
     from pytorch_grad_cam import (
-        GradCAM,
-        HiResCAM,
-        GradCAMElementWise,
-        GradCAMPlusPlus,
-        XGradCAM,
         AblationCAM,
-        ScoreCAM,
         EigenCAM,
         EigenGradCAM,
-        LayerCAM,
         FullGrad,
+        GradCAM,
+        GradCAMElementWise,
+        GradCAMPlusPlus,
+        HiResCAM,
+        LayerCAM,
+        ScoreCAM,
+        XGradCAM,
     )
+    from pytorch_grad_cam.fem import FEM
     from pytorch_grad_cam.finer_cam import FinerCAM
     from pytorch_grad_cam.kpca_cam import KPCAGradCAM
-    from pytorch_grad_cam.fem import FEM
     from pytorch_grad_cam.shapley_cam import ShapleyCAM
-    
+
     # Map method names to classes (based on pytorch-grad-cam documentation)
     CAM_METHODS = {
         # Basic methods
-        'gradcam': GradCAM,
-        'hirescam': HiResCAM,
-        'gradcamelementwise': GradCAMElementWise,
-        'gradcam++': GradCAMPlusPlus,
-        'xgradcam': XGradCAM,
-        
+        "gradcam": GradCAM,
+        "hirescam": HiResCAM,
+        "gradcamelementwise": GradCAMElementWise,
+        "gradcam++": GradCAMPlusPlus,
+        "xgradcam": XGradCAM,
         # Perturbation-based methods
-        'ablationcam': AblationCAM,
-        'scorecam': ScoreCAM,
-        
+        "ablationcam": AblationCAM,
+        "scorecam": ScoreCAM,
         # Eigen-based methods
-        'eigencam': EigenCAM,
-        'eigengradcam': EigenGradCAM,
-        
+        "eigencam": EigenCAM,
+        "eigengradcam": EigenGradCAM,
         # Advanced methods
-        'layercam': LayerCAM,
-        'fullgrad': FullGrad,
-        'finercam': FinerCAM,
-        'kpcagradcam': KPCAGradCAM,
-        'fem': FEM,
-        'shapleycam': ShapleyCAM,
+        "layercam": LayerCAM,
+        "fullgrad": FullGrad,
+        "finercam": FinerCAM,
+        "kpcagradcam": KPCAGradCAM,
+        "fem": FEM,
+        "shapleycam": ShapleyCAM,
     }
 except ImportError as e:
     # Fallback to basic methods if some are not available
     from pytorch_grad_cam import GradCAM, GradCAMPlusPlus
+
     CAM_METHODS = {
-        'gradcam': GradCAM,
-        'gradcam++': GradCAMPlusPlus,
+        "gradcam": GradCAM,
+        "gradcam++": GradCAMPlusPlus,
     }
     print(f"Warning: Some CAM methods not available: {e}")
 
@@ -70,7 +68,7 @@ except ImportError as e:
 def get_available_cam_methods() -> list:
     """
     Get list of available CAM methods.
-    
+
     Returns:
         List of available method names
     """
@@ -199,10 +197,8 @@ def compute_cam_with_sliding_window(
     # Select CAM class from available methods
     method_name = method.lower()
     if method_name not in CAM_METHODS:
-        available = ', '.join(CAM_METHODS.keys())
-        raise ValueError(
-            f"Unknown CAM method '{method}'. Available methods: {available}"
-        )
+        available = ", ".join(CAM_METHODS.keys())
+        raise ValueError(f"Unknown CAM method '{method}'. Available methods: {available}")
     cam_class = CAM_METHODS[method_name]
 
     # Iterate over model parameters (for ensemble prediction)
