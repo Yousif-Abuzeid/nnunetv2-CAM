@@ -27,10 +27,7 @@ try:
         ScoreCAM,
         XGradCAM,
     )
-    from pytorch_grad_cam.fem import FEM
-    from pytorch_grad_cam.finer_cam import FinerCAM
-    from pytorch_grad_cam.kpca_cam import KPCAGradCAM
-    from pytorch_grad_cam.shapley_cam import ShapleyCAM
+   
 
     # Map method names to classes (based on pytorch-grad-cam documentation)
     CAM_METHODS = {
@@ -49,10 +46,7 @@ try:
         # Advanced methods
         "layercam": LayerCAM,
         "fullgrad": FullGrad,
-        "finercam": FinerCAM,
-        "kpcagradcam": KPCAGradCAM,
-        "fem": FEM,
-        "shapleycam": ShapleyCAM,
+
     }
 except ImportError as e:
     # Fallback to basic methods if some are not available
