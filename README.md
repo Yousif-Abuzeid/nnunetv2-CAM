@@ -10,6 +10,7 @@ A standalone, external Python module for computing Class Activation Maps (CAMs) 
 
 - [Features](#features)
 - [Installation](#installation)
+- [Supported CAM Methods](#supported-cam-methods)
 - [Quick Start](#quick-start)
   - [Python API](#python-api)
   - [Command Line](#command-line)
@@ -25,7 +26,7 @@ A standalone, external Python module for computing Class Activation Maps (CAMs) 
 - ✅ **Zero nnUNetv2 Modifications**: Works as an external library
 - ✅ **Leverages Official Pipeline**: Uses nnUNetv2's preprocessing, inference, and postprocessing
 - ✅ **Sliding Window Support**: Full support for nnUNet's patch-based inference
-- ✅ **Multiple CAM Methods**: GradCAM and GradCAM++ (extensible to more)
+- ✅ **CAM Methods**: GradCAM, GradCAM++, HiResCAM, EigenCAM, LayerCAM, and more (see [Supported CAM Methods](#supported-cam-methods))
 - ✅ **2D and 3D Support**: Works with both 2D and 3D medical images
 - ✅ **Ensemble Predictions**: Supports multi-fold ensemble inference
 - ✅ **CLI and Python API**: Use from command line or integrate into your code
@@ -69,6 +70,54 @@ pip show nnunetv2_CAM
 from nnunetv2_cam import run_cam_for_prediction
 print("✅ Installation successful!")
 ```
+
+---
+
+## Supported CAM Methods
+
+This package supports **all CAM methods** from [pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam):
+
+### Basic Methods
+- **GradCAM**: Weight 2D activations by average gradient  *Recommended for most cases*
+- **HiResCAM**: Like GradCAM but element-wise multiply activations with gradients (more faithful)
+- **GradCAMElementWise**: Like GradCAM but element-wise multiply before summing
+- **GradCAM++**: Uses second-order gradients for better localization
+- **XGradCAM**: Scale gradients by normalized activations
+
+### Perturbation-Based Methods
+- **AblationCAM**: Zero out activations and measure output drop (includes batched implementation)
+- **ScoreCAM**: Perturb image by scaled activations and measure output drop
+
+### Eigen-Based Methods
+- **EigenCAM**: First principle component of 2D activations (no class discrimination)
+- **EigenGradCAM**: Like EigenCAM but with class discrimination (cleaner than GradCAM)
+
+### Advanced Methods
+- **LayerCAM**: Spatially weight activations by positive gradients (better for lower layers)
+- **FullGrad**: Compute gradients of biases from all over the network
+- **FinerCAM**: Improves fine-grained classification by comparing similar classes
+- **KPCA-GradCAM**: Like EigenCAM but with Kernel PCA instead of PCA
+- **FEM**: Gradient-free method that binarizes activations
+- **ShapleyCAM**: Weight activations using gradient and Hessian-vector product
+
+### List Available Methods
+
+**Python API**:
+```python
+from nnunetv2_cam.cam_core import get_available_cam_methods
+print(get_available_cam_methods())
+```
+
+**Command Line**:
+```bash
+nnunetv2_cam --list-methods
+```
+
+💡 **Quick Recommendations**:
+- **Start with**: `gradcam` - Fast and reliable
+- **Better localization**: `gradcam++` or `hirescam`
+- **Cleaner results**: `eigengradcam`
+- **Lower layers**: `layercam`
 
 ---
 
@@ -304,7 +353,7 @@ loaded_cam = np.load('/output/case001_cam.npy')
 | `-f, --folds` | 0 1 2 3 4 | Folds to use for ensemble |
 | `-chk, --checkpoint` | checkpoint_final.pth | Checkpoint filename |
 | `--target-class` | 1 | Target class index |
-| `--method` | gradcam | CAM method (gradcam/gradcam++) |
+| `--method` | gradcam | CAM method (use --list-methods to see all) |
 | `--cam-type` | 2d | CAM type (2d/3d) |
 | `--disable-tta` | False | Disable test-time augmentation |
 | `-step_size` | 0.5 | Sliding window step size |

@@ -78,8 +78,7 @@ def main():
         "--method",
         type=str,
         default="gradcam",
-        choices=["gradcam", "gradcam++"],
-        help="CAM method to use. Default: gradcam",
+        help="CAM method to use. Use --list-methods to see all available methods. Default: gradcam",
     )
     parser.add_argument(
         "--cam-type",
@@ -119,6 +118,11 @@ def main():
         help="List available layer names in the model and exit. Useful for finding target layers.",
     )
     parser.add_argument(
+        "--list-methods",
+        action="store_true",
+        help="List all available CAM methods and exit.",
+    )
+    parser.add_argument(
         "--verbose", action="store_true", help="Print detailed progress information."
     )
     parser.add_argument(
@@ -128,6 +132,27 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # List available CAM methods if requested
+    if args.list_methods:
+        from nnunetv2_cam.cam_core import get_available_cam_methods
+        
+        print("\n" + "=" * 70)
+        print("Available CAM Methods:")
+        print("=" * 70)
+        methods = get_available_cam_methods()
+        for i, method in enumerate(sorted(methods), 1):
+            print(f"{i:3d}. {method}")
+        print("=" * 70)
+        print(f"\nTotal: {len(methods)} methods available")
+        print("\nRecommended methods:")
+        print("  - gradcam       : Fast, standard method")
+        print("  - gradcam++     : Better localization than GradCAM")
+        print("  - hirescam      : High resolution, faithful activations")
+        print("  - eigengradcam  : Cleaner than GradCAM (class discriminative)")
+        print("  - layercam      : Good for lower layers")
+        print("=" * 70 + "\n")
+        sys.exit(0)
 
     # Print citation
     print(
