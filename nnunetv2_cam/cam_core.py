@@ -122,7 +122,7 @@ def compute_cam_with_sliding_window(
             image_size, configuration_manager.patch_size, tile_step_size, verbose
         )
     else:
-        image_size = data.shape[1:]  
+        image_size = data.shape[1:]
         if verbose:
             print(f"DEBUG CAM_CORE 3D: Using image_size from data.shape[1:] = {image_size}")
             print(f"DEBUG CAM_CORE 3D: cam_data.shape[1:] = {cam_data.shape[1:]}")
@@ -154,7 +154,9 @@ def compute_cam_with_sliding_window(
         # Create GradCAM object
         with cam_class(model, target_layers=target_layers) as cam:
             # Process each sliding window patch
-            for sl in tqdm(slicers, desc="Processing patches", disable=not verbose, leave=False, position=1):
+            for sl in tqdm(
+                slicers, desc="Processing patches", disable=not verbose, leave=False, position=1
+            ):
                 workon = cam_data[sl][None]
                 workon = workon.to(device, non_blocking=False)
 

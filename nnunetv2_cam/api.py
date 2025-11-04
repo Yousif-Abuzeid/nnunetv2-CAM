@@ -97,7 +97,9 @@ def run_cam_for_prediction(
 
     # Process each input file
     heatmaps = []
-    iterator = tqdm(input_files, desc="Processing files", disable=not verbose, leave=True, position=0)
+    iterator = tqdm(
+        input_files, desc="Processing files", disable=not verbose, leave=True, position=0
+    )
 
     for input_file in iterator:
         if verbose:
@@ -138,7 +140,9 @@ def run_cam_for_prediction(
             save_cam_slices(
                 predicted_cam=predicted_cam,
                 original_data=data,
-                output_file=output_truncated,
+                output_folder=output_folder,
+                case_name=base_name,
+                method=method,
                 properties=properties,
                 configuration_manager=predictor.configuration_manager,
                 verbose=verbose,

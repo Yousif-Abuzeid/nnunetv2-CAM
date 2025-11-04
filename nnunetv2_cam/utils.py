@@ -18,7 +18,9 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 def save_cam_slices(
     predicted_cam: torch.Tensor,
     original_data: torch.Tensor,
-    output_file: str,
+    output_folder: str,
+    case_name: str,
+    method: str = "gradcam",
     properties: dict = None,
     configuration_manager=None,
     verbose: bool = False,
@@ -26,14 +28,14 @@ def save_cam_slices(
     """
     Save CAM heatmap overlays as PNG slices.
 
-    This replicates the slice-by-slice saving logic from the reference implementation.
-    If properties and configuration_manager are provided, CAM will be resampled to
-    original shape using nnUNet's resampling functions.
+    Creates a directory structure: output_folder/cam_{method}/case_name/slice_*.png
 
     Args:
         predicted_cam: CAM heatmap tensor (1, D, H, W) or (1, H, W)
         original_data: Original preprocessed data (C, D, H, W) or (C, H, W)
-        output_file: Base output file path (will be modified to create cam folder)
+        output_folder: Base output folder path
+        case_name: Name of the case (e.g., 'patient_001')
+        method: CAM method name (e.g., 'gradcam', 'gradcam++')
         properties: nnUNet properties dict containing original shape info (optional)
         configuration_manager: nnUNet ConfigurationManager for resampling (optional)
         verbose: Whether to print debug information
@@ -74,46 +76,12 @@ def save_cam_slices(
     slices_cam = torch.split(predicted_cam, 1, dim=1)
     slices_ori = torch.split(original_data, 1, dim=1)
 
-    # Find where to insert 'cam' in the path
-    last_infer_index = output_file.rfind("infer")
+    # Create output directory: output_folder/cam_{method}/case_name/
+    cam_folder = Path(output_folder) / f"cam_{method}" / case_name
+    cam_folder.mkdir(parents=True, exist_ok=True)
 
     if verbose:
-        print(f"DEBUG: output_file = '{output_file}'")
-        print(f"DEBUG: last_infer_index = {last_infer_index}")
-
-    if last_infer_index == -1:
-        # Fallback: use the output file path directly and add _cam
-        output_path = Path(output_file)
-        cam_folder = output_path.parent / f"{output_path.stem}_cam"
-        cam_folder.mkdir(parents=True, exist_ok=True)
-        file_prefix = output_path.stem
-    else:
-        # Replace 'infer' with 'cam'
-        tmp_path = (
-            output_file[:last_infer_index] + "cam" + output_file[last_infer_index + len("infer") :]
-        )
-
-        if verbose:
-            print(f"DEBUG: tmp_path = '{tmp_path}'")
-
-        # Create directory structure
-        path_parts = tmp_path.rsplit("/", 1)
-        if len(path_parts) == 2:
-            new_path = Path(path_parts[0])
-            file_name = path_parts[1]
-        else:
-            new_path = Path(".")
-            file_name = path_parts[0]
-
-        cam_folder = new_path / file_name
-        cam_folder.mkdir(parents=True, exist_ok=True)
-        file_prefix = file_name
-
-        if verbose:
-            print(f"DEBUG: cam_folder = '{cam_folder}'")
-
-    if verbose:
-        print(f"DEBUG: Saving {len(slices_cam)} slices to {cam_folder}")
+        print(f"Saving {len(slices_cam)} slices to {cam_folder}")
 
     # Save each slice
     index = 0
@@ -152,7 +120,7 @@ def save_cam_slices(
 
             # Save
             image = Image.fromarray(visualization)
-            image.save(f"{cam_folder}/{file_prefix}_{index}.png")
+            image.save(cam_folder / f"slice_{index:04d}.png")
 
             if verbose:
                 print(f"✓ Saved slice {index}")
