@@ -21,12 +21,13 @@ try:
         FullGrad,
         GradCAM,
         GradCAMElementWise,
-        GradCAMPlusPlus,
         HiResCAM,
         LayerCAM,
         ScoreCAM,
-        XGradCAM,
     )
+    
+    # Import our 3D-compatible implementations
+    from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
    
 
     # Map method names to classes (based on pytorch-grad-cam documentation)
@@ -35,8 +36,8 @@ try:
         "gradcam": GradCAM,
         "hirescam": HiResCAM,
         "gradcamelementwise": GradCAMElementWise,
-        "gradcam++": GradCAMPlusPlus,
-        "xgradcam": XGradCAM,
+        "gradcam++": GradCAMPlusPlus3D,  # Use our 3D-compatible version
+        "xgradcam": XGradCAM3D,  # Use our 3D-compatible version
         # Perturbation-based methods
         "ablationcam": AblationCAM,
         "scorecam": ScoreCAM,
@@ -50,11 +51,13 @@ try:
     }
 except ImportError as e:
     # Fallback to basic methods if some are not available
-    from pytorch_grad_cam import GradCAM, GradCAMPlusPlus
+    from pytorch_grad_cam import GradCAM
+    from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
 
     CAM_METHODS = {
         "gradcam": GradCAM,
-        "gradcam++": GradCAMPlusPlus,
+        "gradcam++": GradCAMPlusPlus3D,
+        "xgradcam": XGradCAM3D,
     }
     print(f"Warning: Some CAM methods not available: {e}")
 

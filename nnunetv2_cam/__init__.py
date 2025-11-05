@@ -22,7 +22,7 @@ Usage:
     )
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.4"
 __author__ = "Youssef Abuzeid"
 
 from nnunetv2_cam.api import run_cam_for_prediction 

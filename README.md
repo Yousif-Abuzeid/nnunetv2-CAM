@@ -100,24 +100,38 @@ This package supports **all CAM methods** from [pytorch-grad-cam](https://github
 - **FEM**: Gradient-free method that binarizes activations
 - **ShapleyCAM**: Weight activations using gradient and Hessian-vector product
 
+### 3D Compatibility
+
+✅ **All gradient-based methods support both 2D and 3D** medical imaging:
+
+- `gradcam`, `hirescam`, `gradcamelementwise`
+- `gradcam++`, `xgradcam` *(custom 3D-compatible implementations)*
+- `eigencam`, `eigengradcam`, `layercam`
+- `ablationcam`, `scorecam`, `fullgrad`
+
+**Note**: For 3D volumes, use `cam_type='3d'` to process the entire volume at once. For 2D slice-by-slice processing, use `cam_type='2d'`.
+
 ### List Available Methods
 
 **Python API**:
+
 ```python
 from nnunetv2_cam.cam_core import get_available_cam_methods
 print(get_available_cam_methods())
 ```
 
 **Command Line**:
+
 ```bash
 nnunetv2_cam --list-methods
 ```
 
 💡 **Quick Recommendations**:
-- **Start with**: `gradcam` - Fast and reliable
-- **Better localization**: `gradcam++` or `hirescam`
-- **Cleaner results**: `eigengradcam`
-- **Lower layers**: `layercam`
+
+- **Start with**: `gradcam` - Fast and reliable (3D ✅)
+- **Better localization**: `gradcam++` or `hirescam` (3D ✅)
+- **Cleaner results**: `eigengradcam` (3D ✅)
+- **Lower layers**: `layercam` (3D ✅)
 
 ---
 
