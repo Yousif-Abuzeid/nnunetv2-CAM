@@ -18,6 +18,51 @@ from nnunetv2_cam.cam_core import compute_cam_with_sliding_window
 from nnunetv2_cam.utils import save_cam_slices
 
 
+def _resample_cam_to_original_shape(
+    predicted_cam: torch.Tensor,
+    properties: dict,
+    configuration_manager,
+) -> torch.Tensor:
+    """
+    Resample CAM heatmap back to original image shape.
+
+    Uses nnUNet's resampling function to match the output shape with
+    the original prediction output (same dimensions as saved predictions).
+
+    Args:
+        predicted_cam: CAM tensor in resampled/preprocessed space
+        properties: nnUNet properties dict containing shape/spacing info
+        configuration_manager: nnUNet ConfigurationManager for resampling
+
+    Returns:
+        Resampled CAM tensor in original image space
+    """
+    if (
+        properties is not None
+        and configuration_manager is not None
+        and "shape_after_cropping_and_before_resampling" in properties
+    ):
+        original_shape = properties["shape_after_cropping_and_before_resampling"]
+
+        # Get spacing information
+        current_spacing = (
+            configuration_manager.spacing
+            if len(configuration_manager.spacing) == len(original_shape)
+            else [properties["spacing"][0], *configuration_manager.spacing]
+        )
+
+        # Use nnUNet's resampling function (same as used for predictions)
+        predicted_cam = configuration_manager.resampling_fn_probabilities(
+            predicted_cam, original_shape, current_spacing, properties["spacing"]
+        )
+
+        # Convert back to torch if numpy
+        if isinstance(predicted_cam, np.ndarray):
+            predicted_cam = torch.from_numpy(predicted_cam)
+
+    return predicted_cam
+
+
 def run_cam_for_prediction(
     predictor: nnUNetPredictor,
     input_files: Union[str, List[str]],
@@ -136,21 +181,35 @@ def run_cam_for_prediction(
             verbose=verbose,
         )
 
-        # Save slice visualizations
+        # Resample CAM back to original shape (same as nnUNet does for predictions)
+        resampled_cam = _resample_cam_to_original_shape(
+            predicted_cam=predicted_cam,
+            properties=properties,
+            configuration_manager=predictor.configuration_manager,
+        )
+        
+        # Also resample original data to match
+        resampled_data = _resample_cam_to_original_shape(
+            predicted_cam=data,
+            properties=properties,
+            configuration_manager=predictor.configuration_manager,
+        )
+
+        # Save slice visualizations (now both CAM and data are already resampled)
         if save_slices:
             save_cam_slices(
-                predicted_cam=predicted_cam,
-                original_data=data,
+                predicted_cam=resampled_cam,
+                original_data=resampled_data,
                 output_folder=output_folder,
                 case_name=base_name,
                 method=method,
-                properties=properties,
-                configuration_manager=predictor.configuration_manager,
+                properties=None,  # Pass None to skip resampling in save function
+                configuration_manager=None,
                 verbose=verbose,
             )
 
-        # Convert to numpy and store
-        heatmap = predicted_cam.cpu().numpy()
+        # Convert to numpy and store (now properly resampled)
+        heatmap = resampled_cam.cpu().numpy()
         heatmaps.append(heatmap)
 
         if verbose:

@@ -22,9 +22,9 @@ Usage:
     )
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.4.1"
 __author__ = "Youssef Abuzeid"
 
-from nnunetv2_cam.api import run_cam_for_prediction 
+from nnunetv2_cam.api import run_cam_for_prediction
 
 __all__ = ["run_cam_for_prediction"]

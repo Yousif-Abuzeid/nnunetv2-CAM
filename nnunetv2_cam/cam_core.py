@@ -25,10 +25,9 @@ try:
         LayerCAM,
         ScoreCAM,
     )
-    
+
     # Import our 3D-compatible implementations
     from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
-   
 
     # Map method names to classes (based on pytorch-grad-cam documentation)
     CAM_METHODS = {
@@ -47,11 +46,11 @@ try:
         # Advanced methods
         "layercam": LayerCAM,
         "fullgrad": FullGrad,
-
     }
 except ImportError as e:
     # Fallback to basic methods if some are not available
     from pytorch_grad_cam import GradCAM
+
     from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
 
     CAM_METHODS = {
