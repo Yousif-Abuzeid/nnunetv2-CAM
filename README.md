@@ -1,4 +1,4 @@
-# nnunetv2_cam
+# nnunetv2_cam [![PyPI Downloads](https://static.pepy.tech/personalized-badge/nnunetv2-cam?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/nnunetv2-cam) ![PyPI - Version](https://img.shields.io/pypi/v/nnunetv2-cam)
 
 **Class Activation Map (CAM) Generation for nnUNet v2 Models**
 
