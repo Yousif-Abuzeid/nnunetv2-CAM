@@ -7,7 +7,7 @@ Class Activation Maps (CAMs) using pre-trained nnUNetv2 models.
 
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union,Optional
 
 import numpy as np
 import torch
@@ -74,6 +74,8 @@ def run_cam_for_prediction(
     device: torch.device = torch.device("cuda"),
     save_slices: bool = True,
     verbose: bool = False,
+    pool_size: Optional[int] = None,
+    pool_mode: str = "max",
 ) -> List[np.ndarray]:
     """
     Generate CAM heatmaps for nnUNetv2 predictions.
@@ -95,6 +97,8 @@ def run_cam_for_prediction(
         device: Torch device to use (default: cuda)
         save_slices: Whether to save individual slice visualizations (default: True)
         verbose: Print detailed progress information (default: False)
+        pool_size: Optional pooling size for Seg-XRes-CAM (default: None)
+        pool_mode: Pooling mode for Seg-XRes-CAM ('max' or 'mean') (default: 'max')
 
     Returns:
         List of CAM heatmap arrays, one per input file
@@ -115,7 +119,10 @@ def run_cam_for_prediction(
         ...     input_files='/path/to/input/image_0000.nii.gz',
         ...     output_folder='/path/to/output',
         ...     target_layer='encoder.stages.4.0',
-        ...     target_class=1
+        ...     target_class=1,
+        ...     method='segxrescam',
+        ...     pool_size=2,
+        ...     pool_mode='mean'
         ... )
     """
     # Ensure output folder exists
@@ -179,6 +186,8 @@ def run_cam_for_prediction(
             allowed_mirroring_axes=predictor.allowed_mirroring_axes,
             cam_type=cam_type,
             verbose=verbose,
+            pool_size=pool_size,
+            pool_mode=pool_mode,
         )
 
         # Resample CAM back to original shape (same as nnUNet does for predictions)
@@ -187,7 +196,6 @@ def run_cam_for_prediction(
             properties=properties,
             configuration_manager=predictor.configuration_manager,
         )
-        
         # Also resample original data to match
         resampled_data = _resample_cam_to_original_shape(
             predicted_cam=data,

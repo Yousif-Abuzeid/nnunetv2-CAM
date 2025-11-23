@@ -28,6 +28,7 @@ try:
 
     # Import our 3D-compatible implementations
     from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
+    from nnunetv2_cam.custom_cams.seg_xres_cam import SegXResCAM
 
     # Map method names to classes (based on pytorch-grad-cam documentation)
     CAM_METHODS = {
@@ -37,6 +38,7 @@ try:
         "gradcamelementwise": GradCAMElementWise,
         "gradcam++": GradCAMPlusPlus3D,  # Use our 3D-compatible version
         "xgradcam": XGradCAM3D,  # Use our 3D-compatible version
+        "segxrescam": SegXResCAM, # Seg-XRes-CAM
         # Perturbation-based methods
         "ablationcam": AblationCAM,
         "scorecam": ScoreCAM,
@@ -132,6 +134,8 @@ def compute_cam_with_sliding_window(
     allowed_mirroring_axes: Optional[Tuple[int, ...]],
     cam_type: str = "2d",
     verbose: bool = False,
+    pool_size: Optional[int] = None,
+    pool_mode: str = "max",
 ) -> torch.Tensor:
     """
     Compute CAM using sliding window inference, matching the reference implementation.
@@ -154,6 +158,8 @@ def compute_cam_with_sliding_window(
         allowed_mirroring_axes: Axes for mirroring
         cam_type: '2d' or '3d'
         verbose: Whether to print debug information
+        pool_size: Optional pooling size for Seg-XRes-CAM
+        pool_mode: Pooling mode for Seg-XRes-CAM ('max' or 'mean')
 
     Returns:
         CAM heatmap tensor
@@ -181,8 +187,8 @@ def compute_cam_with_sliding_window(
     else:
         image_size = data.shape[1:]
         if verbose:
-            print(f"DEBUG CAM_CORE 3D: Using image_size from data.shape[1:] = {image_size}")
-            print(f"DEBUG CAM_CORE 3D: cam_data.shape[1:] = {cam_data.shape[1:]}")
+            tqdm.write(f"DEBUG CAM_CORE 3D: Using image_size from data.shape[1:] = {image_size}")
+            tqdm.write(f"DEBUG CAM_CORE 3D: cam_data.shape[1:] = {cam_data.shape[1:]}")
         slicers = _get_sliding_window_slicers(
             image_size, configuration_manager.patch_size, tile_step_size, verbose
         )
@@ -196,6 +202,12 @@ def compute_cam_with_sliding_window(
         available = ", ".join(CAM_METHODS.keys())
         raise ValueError(f"Unknown CAM method '{method}'. Available methods: {available}")
     cam_class = CAM_METHODS[method_name]
+
+    # Prepare kwargs for CAM class
+    cam_kwargs = {}
+    if pool_size is not None:
+        cam_kwargs["pool_size"] = pool_size
+        cam_kwargs["pool_mode"] = pool_mode
 
     # Iterate over model parameters (for ensemble prediction)
     for params in list_of_parameters:
@@ -213,7 +225,7 @@ def compute_cam_with_sliding_window(
         n_predictions_cam_file = torch.zeros(cam_data.shape[1:], dtype=torch.half, device=device)
 
         # Create GradCAM object
-        with cam_class(model, target_layers=target_layers) as cam:
+        with cam_class(model, target_layers=target_layers, **cam_kwargs) as cam:
             # Process each sliding window patch
             for sl in tqdm(
                 slicers, desc="Processing patches", disable=not verbose, leave=False, position=1
@@ -293,7 +305,7 @@ def _get_sliding_window_slicers(
             tile_step_size,
         )
         if verbose:
-            print(
+            tqdm.write(
                 f"n_steps {image_size[0] * len(steps[0]) * len(steps[1])}, image size is"
                 f" {image_size}, tile_size {patch_size}, tile_step_size {tile_step_size}"
             )
@@ -313,7 +325,7 @@ def _get_sliding_window_slicers(
         # 3D patches
         steps = compute_steps_for_sliding_window(image_size, patch_size, tile_step_size)
         if verbose:
-            print(
+            tqdm.write(
                 f"n_steps {np.prod([len(i) for i in steps])}, image size is {image_size}, "
                 f"tile_size {patch_size}, tile_step_size {tile_step_size}"
             )
