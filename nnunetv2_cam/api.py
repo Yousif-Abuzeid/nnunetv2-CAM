@@ -67,7 +67,7 @@ def run_cam_for_prediction(
     predictor: nnUNetPredictor,
     input_files: Union[str, List[str]],
     output_folder: str,
-    target_layer: str,
+    target_layer: Union[str, List[str]],
     target_class: int = 1,
     method: str = "gradcam",
     cam_type: str = "2d",
@@ -88,8 +88,8 @@ def run_cam_for_prediction(
         predictor: Initialized nnUNetPredictor instance
         input_files: Single file path or list of file paths to process
         output_folder: Directory to save CAM outputs
-        target_layer: Name of the target layer for CAM computation
-                      (e.g., 'encoder.stages.4.0')
+        target_layer: Name(s) of the target layer(s) for CAM computation
+                      (e.g., 'encoder.stages.4.0' or ['encoder.stages.4.0', 'decoder.stages.0.0'])
         target_class: Target class index for CAM (default: 1, foreground)
         method: CAM method - any method from pytorch-grad-cam (e.g., 'gradcam',
                 'gradcam++', 'eigencam', 'layercam', etc.) (default: 'gradcam')

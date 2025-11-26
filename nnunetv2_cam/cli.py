@@ -64,8 +64,9 @@ def main():
     parser.add_argument(
         "--target-layer",
         type=str,
+        nargs="+",
         required=True,
-        help="Name of target layer for CAM computation (e.g., 'encoder.stages.4.0'). "
+        help="Name(s) of target layer(s) for CAM computation (e.g., 'encoder.stages.4.0'). "
         "Use --list-layers to see available layers.",
     )
     parser.add_argument(

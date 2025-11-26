@@ -5,7 +5,7 @@ This module wraps pytorch-grad-cam to compute Class Activation Maps
 with support for nnUNetv2's sliding window inference.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -29,6 +29,7 @@ try:
     # Import our 3D-compatible implementations
     from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
     from nnunetv2_cam.custom_cams.seg_xres_cam import SegXResCAM
+    from nnunetv2_cam.custom_cams.ablation_cam_3d import AblationCAM3D
 
     # Map method names to classes (based on pytorch-grad-cam documentation)
     CAM_METHODS = {
@@ -40,7 +41,7 @@ try:
         "xgradcam": XGradCAM3D,  # Use our 3D-compatible version
         "segxrescam": SegXResCAM, # Seg-XRes-CAM
         # Perturbation-based methods
-        "ablationcam": AblationCAM,
+        "ablationcam": AblationCAM3D, # Use our 3D-compatible version
         "scorecam": ScoreCAM,
         # Eigen-based methods
         "eigencam": EigenCAM,
@@ -92,37 +93,47 @@ class SemanticSegmentationTarget:
         return (model_output * self.mask).sum() * self.scale_factor
 
 
-def get_target_layer(model: torch.nn.Module, target_layer_name: str) -> List[torch.nn.Module]:
+def get_target_layer(
+    model: torch.nn.Module, target_layer_name: Union[str, List[str]]
+) -> List[torch.nn.Module]:
     """
-    Get the target layer from the model by name.
+    Get the target layer(s) from the model by name.
 
     Args:
         model: The neural network model
-        target_layer_name: Name of the layer (e.g., 'encoder.stages.4.0')
+        target_layer_name: Name(s) of the layer(s) (e.g., 'encoder.stages.4.0')
 
     Returns:
-        List containing the target layer module
+        List containing the target layer module(s)
 
     Raises:
-        ValueError: If the target layer is not found
+        ValueError: If a target layer is not found
     """
     # Build a dictionary of all named modules
     module_dict = dict(model.named_modules())
 
-    if target_layer_name not in module_dict:
-        available_layers = [name for name, _ in model.named_modules() if name]
-        raise ValueError(
-            f"Target layer '{target_layer_name}' not found in model.\n"
-            f"Available layers: {available_layers[:10]}..."  # Show first 10
-        )
+    if isinstance(target_layer_name, str):
+        target_layer_names = [target_layer_name]
+    else:
+        target_layer_names = target_layer_name
 
-    return [module_dict[target_layer_name]]
+    target_layers = []
+    for name in target_layer_names:
+        if name not in module_dict:
+            available_layers = [n for n, _ in model.named_modules() if n]
+            raise ValueError(
+                f"Target layer '{name}' not found in model.\n"
+                f"Available layers: {available_layers[:]}"
+            )
+        target_layers.append(module_dict[name])
+
+    return target_layers
 
 
 def compute_cam_with_sliding_window(
     model: torch.nn.Module,
     data: torch.Tensor,
-    target_layer_name: str,
+    target_layer_name: Union[str, List[str]],
     target_class: int,
     method: str,
     device: torch.device,
