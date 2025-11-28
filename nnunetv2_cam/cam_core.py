@@ -30,6 +30,7 @@ try:
     from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
     from nnunetv2_cam.custom_cams.seg_xres_cam import SegXResCAM
     from nnunetv2_cam.custom_cams.ablation_cam_3d import AblationCAM3D
+    from nnunetv2_cam.custom_cams.score_cam_3d import ScoreCAM3D
 
     # Map method names to classes (based on pytorch-grad-cam documentation)
     CAM_METHODS = {
@@ -42,7 +43,7 @@ try:
         "segxrescam": SegXResCAM, # Seg-XRes-CAM
         # Perturbation-based methods
         "ablationcam": AblationCAM3D, # Use our 3D-compatible version
-        "scorecam": ScoreCAM,
+        "scorecam": ScoreCAM3D,
         # Eigen-based methods
         "eigencam": EigenCAM,
         "eigengradcam": EigenGradCAM,
