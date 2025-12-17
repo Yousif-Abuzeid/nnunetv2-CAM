@@ -22,17 +22,22 @@ def _resample_cam_to_original_shape(
     predicted_cam: torch.Tensor,
     properties: dict,
     configuration_manager,
+    plans_manager=None,
+    label_manager=None,
 ) -> torch.Tensor:
     """
     Resample CAM heatmap back to original image shape.
 
     Uses nnUNet's resampling function to match the output shape with
     the original prediction output (same dimensions as saved predictions).
+    Also performs revert cropping and revert transpose if necessary.
 
     Args:
         predicted_cam: CAM tensor in resampled/preprocessed space
         properties: nnUNet properties dict containing shape/spacing info
         configuration_manager: nnUNet ConfigurationManager for resampling
+        plans_manager: nnUNet PlansManager for transpose information
+        label_manager: nnUNet LabelManager for reverting cropping
 
     Returns:
         Resampled CAM tensor in original image space
@@ -59,6 +64,29 @@ def _resample_cam_to_original_shape(
         # Convert back to torch if numpy
         if isinstance(predicted_cam, np.ndarray):
             predicted_cam = torch.from_numpy(predicted_cam)
+
+        # Revert cropping
+        if label_manager is not None and "bbox_used_for_cropping" in properties:
+            predicted_cam = label_manager.revert_cropping_on_probabilities(
+                predicted_cam,
+                properties["bbox_used_for_cropping"],
+                properties["shape_before_cropping"],
+            )
+
+        # Revert transpose
+        if plans_manager is not None and "transpose_backward" in plans_manager.plans.keys():
+             # Check if transpose_backward is needed (it usually is for 3D)
+             # The existing nnunet code accesses it via plans_manager.transpose_backward which might be a property or in plans
+             # Let's check how it's accessed in export_prediction.py. It uses plans_manager.transpose_backward.
+             
+             # Note: predicted_cam is (C, ...) or (1, ...)
+             # transpose_backward is for spatial dimensions. We need to offset by 1 for the channel dim.
+             transpose_order = [0] + [i + 1 for i in plans_manager.transpose_backward]
+             
+             if isinstance(predicted_cam, torch.Tensor):
+                 predicted_cam = predicted_cam.permute(*transpose_order)
+             else:
+                 predicted_cam = predicted_cam.transpose(transpose_order)
 
     return predicted_cam
 
@@ -195,12 +223,16 @@ def run_cam_for_prediction(
             predicted_cam=predicted_cam,
             properties=properties,
             configuration_manager=predictor.configuration_manager,
+            plans_manager=predictor.plans_manager,
+            label_manager=predictor.label_manager,
         )
         # Also resample original data to match
         resampled_data = _resample_cam_to_original_shape(
             predicted_cam=data,
             properties=properties,
             configuration_manager=predictor.configuration_manager,
+            plans_manager=predictor.plans_manager,
+            label_manager=predictor.label_manager,
         )
 
         # Save slice visualizations (now both CAM and data are already resampled)
