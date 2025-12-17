@@ -4,6 +4,19 @@
 
 A standalone, external Python module for computing Class Activation Maps (CAMs) on models trained with [nnUNetv2](https://github.com/MIC-DKFZ/nnUNet). This module **does not modify** nnUNetv2 source code and uses it as a dependency.
 
+if you find this tool useful, please consider citing:
+
+```bibtex
+@misc{abuzeid2025xaidrivendiagnosisgeneralizationfailure,
+      title={XAI-Driven Diagnosis of Generalization Failure in State-Space Cerebrovascular Segmentation Models: A Case Study on Domain Shift Between RSNA and TopCoW Datasets}, 
+      author={Youssef Abuzeid and Shimaa El-Bana and Ahmad Al-Kabbany},
+      year={2025},
+      eprint={2512.13977},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2512.13977}, 
+}
+```
 ---
 
 ## 📑 Table of Contents
@@ -86,7 +99,6 @@ This package supports **all CAM methods** from [pytorch-grad-cam](https://github
 
 ### Perturbation-Based Methods
 - **AblationCAM**: Zero out activations and measure output drop (includes batched implementation)
-- **ScoreCAM**: Perturb image by scaled activations and measure output drop
 
 ### Eigen-Based Methods
 - **EigenCAM**: First principle component of 2D activations (no class discrimination)
@@ -107,7 +119,7 @@ This package supports **all CAM methods** from [pytorch-grad-cam](https://github
 - `gradcam`, `hirescam`, `gradcamelementwise`
 - `gradcam++`, `xgradcam` *(custom 3D-compatible implementations)*
 - `eigencam`, `eigengradcam`, `layercam`
-- `ablationcam`, `scorecam`, `fullgrad`
+- `ablationcam`, `fullgrad`
 
 **Note**: For 3D volumes, use `cam_type='3d'` to process the entire volume at once. For 2D slice-by-slice processing, use `cam_type='2d'`.
 

@@ -28,9 +28,8 @@ try:
 
     # Import our 3D-compatible implementations
     from nnunetv2_cam.custom_cams import GradCAMPlusPlus3D, XGradCAM3D
-    from nnunetv2_cam.custom_cams.seg_xres_cam import SegXResCAM
     from nnunetv2_cam.custom_cams.ablation_cam_3d import AblationCAM3D
-    from nnunetv2_cam.custom_cams.score_cam_3d import ScoreCAM3D
+    from nnunetv2_cam.custom_cams.seg_xres_cam import SegXResCAM
 
     # Map method names to classes (based on pytorch-grad-cam documentation)
     CAM_METHODS = {
@@ -40,10 +39,9 @@ try:
         "gradcamelementwise": GradCAMElementWise,
         "gradcam++": GradCAMPlusPlus3D,  # Use our 3D-compatible version
         "xgradcam": XGradCAM3D,  # Use our 3D-compatible version
-        "segxrescam": SegXResCAM, # Seg-XRes-CAM
+        "segxrescam": SegXResCAM,  # Seg-XRes-CAM
         # Perturbation-based methods
-        "ablationcam": AblationCAM3D, # Use our 3D-compatible version
-        "scorecam": ScoreCAM3D,
+        "ablationcam": AblationCAM3D,  # Use our 3D-compatible version
         # Eigen-based methods
         "eigencam": EigenCAM,
         "eigengradcam": EigenGradCAM,
@@ -177,6 +175,21 @@ def compute_cam_with_sliding_window(
         CAM heatmap tensor
     """
 
+    print(
+        """
+If you find this tool useful, please consider citing:
+
+@misc{abuzeid2025xaidrivendiagnosisgeneralizationfailure,
+      title={XAI-Driven Diagnosis of Generalization Failure in State-Space Cerebrovascular Segmentation Models: A Case Study on Domain Shift Between RSNA and TopCoW Datasets}, 
+      author={Youssef Abuzeid and Shimaa El-Bana and Ahmad Al-Kabbany},
+      year={2025},
+      eprint={2512.13977},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2512.13977}, 
+}
+"""
+    )
     # Get target layers
     target_layers = get_target_layer(model, target_layer_name)
 
