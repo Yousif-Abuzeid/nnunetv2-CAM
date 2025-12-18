@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 from nnunetv2_cam.cam_core import compute_cam_with_sliding_window
 from nnunetv2_cam.utils import save_cam_slices
+from acvl_utils.cropping_and_padding.bounding_boxes import bounding_box_to_slice
 
 
 def _resample_cam_to_original_shape(
@@ -66,12 +67,23 @@ def _resample_cam_to_original_shape(
             predicted_cam = torch.from_numpy(predicted_cam)
 
         # Revert cropping
-        if label_manager is not None and "bbox_used_for_cropping" in properties:
-            predicted_cam = label_manager.revert_cropping_on_probabilities(
-                predicted_cam,
-                properties["bbox_used_for_cropping"],
-                properties["shape_before_cropping"],
-            )
+        # Revert cropping
+        if "bbox_used_for_cropping" in properties:
+             # Manually revert cropping to ensure background is 0 (and not 1 as LabelManager does for probs)
+             shape_original = properties["shape_before_cropping"]
+             bbox = properties["bbox_used_for_cropping"]
+             
+             new_shape = (predicted_cam.shape[0], *shape_original)
+             probs_reverted = torch.zeros(
+                 new_shape, dtype=predicted_cam.dtype, device=predicted_cam.device
+             )
+             
+             slicer = bounding_box_to_slice(bbox)
+             # correct slicing for channel + spatial
+             full_slicer = tuple([slice(None)] + list(slicer))
+             
+             probs_reverted[full_slicer] = predicted_cam
+             predicted_cam = probs_reverted
 
         # Revert transpose
         if plans_manager is not None and "transpose_backward" in plans_manager.plans.keys():
