@@ -175,21 +175,6 @@ def compute_cam_with_sliding_window(
         CAM heatmap tensor
     """
 
-    print(
-        """
-If you find this tool useful, please consider citing:
-
-@misc{abuzeid2025xaidrivendiagnosisgeneralizationfailure,
-      title={XAI-Driven Diagnosis of Generalization Failure in State-Space Cerebrovascular Segmentation Models: A Case Study on Domain Shift Between RSNA and TopCoW Datasets}, 
-      author={Youssef Abuzeid and Shimaa El-Bana and Ahmad Al-Kabbany},
-      year={2025},
-      eprint={2512.13977},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2512.13977}, 
-}
-"""
-    )
     # Get target layers
     target_layers = get_target_layer(model, target_layer_name)
 
@@ -211,9 +196,7 @@ If you find this tool useful, please consider citing:
         )
     else:
         image_size = data.shape[1:]
-        if verbose:
-            tqdm.write(f"DEBUG CAM_CORE 3D: Using image_size from data.shape[1:] = {image_size}")
-            tqdm.write(f"DEBUG CAM_CORE 3D: cam_data.shape[1:] = {cam_data.shape[1:]}")
+
         slicers = _get_sliding_window_slicers(
             image_size, configuration_manager.patch_size, tile_step_size, verbose
         )
@@ -253,7 +236,7 @@ If you find this tool useful, please consider citing:
         with cam_class(model, target_layers=target_layers, **cam_kwargs) as cam:
             # Process each sliding window patch
             for sl in tqdm(
-                slicers, desc="Processing patches", disable=not verbose, leave=False, position=1
+                slicers, desc="Processing patches", disable=not verbose, leave=False,position=1
             ):
                 workon = cam_data[sl][None]
                 workon = workon.to(device, non_blocking=False)
@@ -329,11 +312,6 @@ def _get_sliding_window_slicers(
             patch_size,
             tile_step_size,
         )
-        if verbose:
-            tqdm.write(
-                f"n_steps {image_size[0] * len(steps[0]) * len(steps[1])}, image size is"
-                f" {image_size}, tile_size {patch_size}, tile_step_size {tile_step_size}"
-            )
         for d in range(image_size[0]):
             for sx in steps[0]:
                 for sy in steps[1]:
@@ -349,11 +327,6 @@ def _get_sliding_window_slicers(
     else:
         # 3D patches
         steps = compute_steps_for_sliding_window(image_size, patch_size, tile_step_size)
-        if verbose:
-            tqdm.write(
-                f"n_steps {np.prod([len(i) for i in steps])}, image size is {image_size}, "
-                f"tile_size {patch_size}, tile_step_size {tile_step_size}"
-            )
         for sx in steps[0]:
             for sy in steps[1]:
                 for sz in steps[2]:

@@ -317,20 +317,41 @@ nnunetv2_cam --list-layers \
     -i /dummy -o /dummy --target-layer dummy
 ```
 
-### Common Target Layers
+### Target Layer
 
-For standard nnU-Net architectures (including U-Mamba):
+For standard nnU-Net architectures:
 
-| Layer | Description | Recommended Use |
-|-------|-------------|-----------------|
-| `encoder.stages.4.0` | Deepest encoder | ⭐ **Most semantic features** |
-| `encoder.stages.3.0` | 4th encoder stage | Mid-level features |
-| `encoder.stages.2.0` | 3rd encoder stage | Low-level features |
-| `encoder.stages.1.0` | 2nd encoder stage | Very low-level features |
-| `decoder.stages.0.0` | First decoder | After upsampling |
-| `decoder.stages.1.0` | Second decoder | Mid-resolution |
+Seg Grad Cam proposed using the bottleneck layer of the encoder but more recent layers propose that segmentation is different from classification and the decision isnt taken in one layer only so You could use multiple layers to get a better result or if you want you can stick to one layer like this:
 
-💡 **Tip**: Start with `encoder.stages.4.0` - it usually gives the best results!
+```python
+# Option 1: Single Layer (Bottleneck)
+target_layer = 'encoder.stages.4.0'
+
+# Option 2: Multi-Layer Aggregation
+target_layers = [
+    'encoder.stages.4.0',
+    'decoder.stages.0.0',
+    'decoder.stages.1.0',
+    'decoder.stages.2.0'
+]
+
+heatmaps = run_cam_for_prediction(
+    predictor=predictor,
+    input_files='/path/to/images',
+    output_folder='/path/to/output',
+    target_layer=target_layers,
+    target_class=1,
+    verbose=True
+)
+```
+
+| Layer Name | Description |
+|---|---|
+| `encoder.stages.4.0` | Deepest encoder layer (Bottleneck) |
+| `decoder.stages.0.0` | First decoder stage |
+| `decoder.stages.1.0` | Second decoder stage |
+| `decoder.stages.2.0` | Third decoder stage |
+
 
 ---
 
@@ -354,7 +375,7 @@ The tool generates two types of outputs:
 ```python
 # Save heatmap to file
 import numpy as np
-np.save('/output/case001_cam.npy', heatmaps[0])
+np.save('/output/case001_cam.npy', heatmaps)
 
 # Load later
 loaded_cam = np.load('/output/case001_cam.npy')
@@ -387,6 +408,9 @@ loaded_cam = np.load('/output/case001_cam.npy')
 | `--verbose` | False | Print detailed progress |
 | `--list-layers` | False | List available layers and exit |
 | `--no-save-slices` | False | Don't save PNG slices |
+| `--save-numpy` | False | Save CAM heatmaps as .npy files |
+| `--pool-size` | None | Pooling size for Seg-XRes-CAM |
+| `--pool-mode` | max | Pooling mode for Seg-XRes-CAM (max/mean) |
 
 ### Examples
 

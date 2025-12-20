@@ -181,6 +181,22 @@ def run_cam_for_prediction(
     # Set model to evaluation mode
     model = predictor.network.to(device).eval()
 
+    print(
+        """
+If you find this tool useful, please consider citing:
+
+@misc{abuzeid2025xaidrivendiagnosisgeneralizationfailure,
+      title={XAI-Driven Diagnosis of Generalization Failure in State-Space Cerebrovascular Segmentation Models: A Case Study on Domain Shift Between RSNA and TopCoW Datasets}, 
+      author={Youssef Abuzeid and Shimaa El-Bana and Ahmad Al-Kabbany},
+      year={2025},
+      eprint={2512.13977},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2512.13977}, 
+}
+"""
+    )
+
     if verbose:
         print(f"Processing {len(input_files)} files...")
         print(f"Target layer: {target_layer}")
@@ -191,7 +207,7 @@ def run_cam_for_prediction(
     # Process each input file
     heatmaps = []
     iterator = tqdm(
-        input_files, desc="Processing files", disable=not verbose, leave=True, position=0
+        input_files, desc="Processing files", disable=not verbose, leave=True,position=0
     )
 
     for input_file in iterator:

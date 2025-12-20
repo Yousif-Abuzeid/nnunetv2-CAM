@@ -131,6 +131,26 @@ def main():
         action="store_true",
         help="Don't save individual slice visualizations (only useful for debugging).",
     )
+    parser.add_argument(
+        "--save-numpy",
+        action="store_true",
+        help="Save CAM heatmaps as .npy files.",
+    )
+
+    # Seg-XRes-CAM specific arguments
+    parser.add_argument(
+        "--pool-size",
+        type=int,
+        default=None,
+        help="Pooling size for Seg-XRes-CAM (e.g., 2). Default: None",
+    )
+    parser.add_argument(
+        "--pool-mode",
+        type=str,
+        default="max",
+        choices=["max", "mean"],
+        help="Pooling mode for Seg-XRes-CAM. Default: max",
+    )
 
     args = parser.parse_args()
 
@@ -155,14 +175,7 @@ def main():
         print("=" * 70 + "\n")
         sys.exit(0)
 
-    # Print citation
-    print(
-        "\n" + "=" * 70 + "\nnnunetv2_cam: CAM Generation for nnU-Net v2\n"
-        "=" * 70 + "\n\nWhen using this tool, please cite:\n"
-        "  - nnU-Net: Isensee et al., Nature Methods 18(2), 203-211 (2021)\n"
-        "  - Grad-CAM: Selvaraju et al., ICCV 2017\n" + "=" * 70 + "\n"
-    )
-
+ 
     # Process folds argument
     args.f = [i if i == "all" else int(i) for i in args.f]
 
@@ -183,7 +196,6 @@ def main():
         tile_step_size=args.step_size,
         use_gaussian=True,
         use_mirroring=not args.disable_tta,
-        perform_everything_on_gpu=(args.device == "cuda"),
         device=device,
         verbose=args.verbose,
         verbose_preprocessing=False,
@@ -216,12 +228,13 @@ def main():
         sys.exit(0)
 
     # Validate target layer
-    try:
-        dict(predictor.network.named_modules())[args.target_layer]
-    except KeyError:
-        print(f"\nERROR: Target layer '{args.target_layer}' not found in model!")
-        print("Use --list-layers to see available layers.\n")
-        sys.exit(1)
+    # Validate target layer
+    available_modules = dict(predictor.network.named_modules())
+    for layer_name in args.target_layer:
+        if layer_name not in available_modules:
+            print(f"\nERROR: Target layer '{layer_name}' not found in model!")
+            print("Use --list-layers to see available layers.\n")
+            sys.exit(1)
 
     # Run CAM generation
     if args.verbose:
@@ -246,7 +259,39 @@ def main():
             device=device,
             save_slices=not args.no_save_slices,
             verbose=args.verbose,
+            pool_size=args.pool_size,
+            pool_mode=args.pool_mode,
         )
+
+        # Save numpy arrays if requested
+        if args.save_numpy:
+            import numpy as np
+            import os
+            
+
+            from nnunetv2_cam.api import _find_input_files
+            from pathlib import Path
+            
+            if os.path.isdir(args.i):
+                files = _find_input_files(args.i)
+            elif isinstance(args.i, str):
+                files = [args.i]
+            else:
+                files = args.i 
+                if os.path.isfile(args.i):
+                    files = [args.i]
+                else:
+                     files = _find_input_files(args.i)
+
+            for i, (heatmap, file_path) in enumerate(zip(heatmaps, files)):
+                 base_name = Path(file_path).stem
+                 if base_name.endswith("_0000"):
+                     base_name = base_name[:-5]
+                 
+                 save_path = os.path.join(args.o, f"{base_name}_{method}_cam.npy")
+                 if args.verbose:
+                     print(f"  Saving numpy: {save_path}")
+                 np.save(save_path, heatmap)
 
         print(f"\n✓ Successfully generated CAMs for {len(heatmaps)} cases")
         print(f"  Output saved to: {args.o}\n")
