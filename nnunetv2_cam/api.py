@@ -58,6 +58,8 @@ def _resample_cam_to_original_shape(
         )
 
         # Use nnUNet's resampling function (same as used for predictions)
+        if isinstance(predicted_cam, torch.Tensor):
+            predicted_cam = predicted_cam.cpu().numpy()
         predicted_cam = configuration_manager.resampling_fn_probabilities(
             predicted_cam, original_shape, current_spacing, properties["spacing"]
         )

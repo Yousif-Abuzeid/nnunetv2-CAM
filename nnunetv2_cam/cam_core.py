@@ -247,6 +247,8 @@ def compute_cam_with_sliding_window(
                         model, workon, use_mirroring, allowed_mirroring_axes
                     )[0]
                     predicted_probabilities = label_manager.apply_inference_nonlin(prediction)
+                    if isinstance(predicted_probabilities, torch.Tensor):
+                        predicted_probabilities = predicted_probabilities.cpu()
                     car_mask = (
                         label_manager.convert_probabilities_to_segmentation(predicted_probabilities)
                         .unsqueeze(0)
